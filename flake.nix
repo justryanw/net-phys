@@ -18,12 +18,12 @@
 
         rustToolchain = pkgs.rust-bin.stable.latest.default;
 
-        naersk = pkgs.callPackage naersk-src { 
+        naersk = pkgs.callPackage naersk-src {
           cargo = rustToolchain;
           rustc = rustToolchain;
         };
 
-        buildDeps = [ 
+        buildDeps = [
           pkg-config
           makeWrapper
           clang
@@ -49,14 +49,19 @@
       in
       with pkgs; {
         # For `nix build` & `nix run`:
-        packages.dev = naersk.buildPackage rec {
-          pname = "bevy-flake-template";
+        packages.server = naersk.buildPackage rec {
+          pname = "server";
           src = ./.;
 
           nativeBuildInputs = buildDeps;
           buildInputs = runtimeDeps;
 
+          cargoBuildOptions = inputList: inputList ++ [ "--bins" ];
+
           overrideMain = attrs: {
+            preConfigure = ''
+              cargo_build_options="$cargo_build_options --bin server"
+            '';
             fixupPhase = ''
               wrapProgram $out/bin/${pname} \
                 --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps} \
@@ -69,7 +74,7 @@
           release = false;
         };
 
-        packages.default =  naersk.buildPackage rec {
+        packages.default = naersk.buildPackage rec {
           pname = "bevy-flake-template";
           src = ./.;
 
