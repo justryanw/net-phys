@@ -9,7 +9,6 @@
   outputs = inputs @ { nixpkgs, flake-parts, rust-overlay, naersk-src, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" ];
     perSystem = { pkgs, system, ... }:
-      with pkgs;
       let
         overlays = [ (import rust-overlay) ];
         pkgs = (import nixpkgs) {
@@ -23,14 +22,14 @@
           rustc = rustStable;
         };
 
-        buildDeps = [
+        buildDeps = (with pkgs; [
           pkg-config
           makeWrapper
           clang
           mold
-        ];
+        ]);
 
-        runtimeDeps = [
+        runtimeDeps = (with pkgs; [
           libxkbcommon
           alsa-lib
           udev
@@ -41,19 +40,20 @@
           libXrandr
           libXi
           libX11
-        ]);
+        ]));
 
-        sharedAttrs = { pname }: rec {
+        sharedAttrs = { pname, binName }: rec {
           inherit pname;
-          src = ./.;
+          src = pkgs.lib.cleanSource ./.;
 
-          copyBinsFilter = ''select(.reason == "compiler-artifact" and .executable != null and .profile.test == false and .target.name == "${pname}")'';
+          copyBinsFilter = ''select(.reason == "compiler-artifact" and .executable != null and .profile.test == false and .target.name == "${binName}")'';
 
           nativeBuildInputs = buildDeps;
           buildInputs = runtimeDeps;
 
           overrideMain = attrs: {
             fixupPhase = ''
+              mv $out/bin/${binName} $out/bin/${pname}
               wrapProgram $out/bin/${pname} \
                 --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps} \
                 --prefix XCURSOR_THEME : "Adwaita"
@@ -63,8 +63,8 @@
           };
         };
 
-        clientAttrs = sharedAttrs { pname = "client"; };
-        serverAttrs = sharedAttrs { pname = "server"; };
+        clientAttrs = sharedAttrs { binName = "client"; pname = "net-phys"; };
+        serverAttrs = sharedAttrs { binName = "server"; pname = "net-phys-server"; };
 
         devAttrs = { release = false; };
       in
@@ -86,7 +86,7 @@
           nativeBuildInputs = buildDeps ++ [ rustStable ];
           buildInputs = runtimeDeps;
 
-          LD_LIBRARY_PATH = "${lib.makeLibraryPath runtimeDeps}";
+          LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath runtimeDeps}";
           XCURSOR_THEME = "Adwaita";
         };
       };
