@@ -42,8 +42,13 @@
           libX11
         ]));
 
+        manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
+
+        packageName = manifest.name;
+
         sharedAttrs = { pname, binName }: rec {
           inherit pname;
+          version = manifest.version;
           src = pkgs.lib.cleanSource ./.;
 
           copyBinsFilter = ''select(.reason == "compiler-artifact" and .executable != null and .profile.test == false and .target.name == "${binName}")'';
@@ -63,8 +68,8 @@
           };
         };
 
-        clientAttrs = sharedAttrs { binName = "client"; pname = "net-phys"; };
-        serverAttrs = sharedAttrs { binName = "server"; pname = "net-phys-server"; };
+        clientAttrs = sharedAttrs { binName = "client"; pname = packageName; };
+        serverAttrs = sharedAttrs { binName = "server"; pname = "${packageName}-server"; };
 
         devAttrs = { release = false; };
       in

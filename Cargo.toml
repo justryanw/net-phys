@@ -1,5 +1,5 @@
 [package]
-name = "bevy-flake-template"
+name = "net-phys"
 version = "0.1.0"
 edition = "2021"
 
