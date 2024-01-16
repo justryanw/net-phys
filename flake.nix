@@ -16,11 +16,11 @@
           inherit system overlays;
         };
 
-        rustToolchain = pkgs.rust-bin.stable.latest.default;
+        rustStable = pkgs.rust-bin.stable.latest.default;
 
         naersk = pkgs.callPackage naersk-src {
-          cargo = rustToolchain;
-          rustc = rustToolchain;
+          cargo = rustStable;
+          rustc = rustStable;
         };
 
         buildDeps = [
@@ -33,72 +33,57 @@
         runtimeDeps = [
           libxkbcommon
           alsa-lib
-          pipewire.lib
           udev
           vulkan-loader
-
-          # WINIT_UNIX_BACKEND=wayland
           wayland
         ] ++ (with xorg; [
-          # WINIT_UNIX_BACKEND=x11
           libXcursor
           libXrandr
           libXi
           libX11
         ]);
-      in
-      with pkgs; {
-        # For `nix build` & `nix run`:
-        packages.server = naersk.buildPackage rec {
-          pname = "server";
+
+        sharedAttrs = { pname }: rec {
+          inherit pname;
           src = ./.;
+
+          copyBinsFilter = ''select(.reason == "compiler-artifact" and .executable != null and .profile.test == false and .target.name == "${pname}")'';
 
           nativeBuildInputs = buildDeps;
           buildInputs = runtimeDeps;
 
-          cargoBuildOptions = inputList: inputList ++ [ "--bins" ];
-
           overrideMain = attrs: {
-            preConfigure = ''
-              cargo_build_options="$cargo_build_options --bin server"
+            fixupPhase = ''
+              wrapProgram $out/bin/${pname} \
+                --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps} \
+                --prefix XCURSOR_THEME : "Adwaita"
+              mkdir -p $out/bin/assets
+              cp -a assets $out/bin
             '';
-            fixupPhase = ''
-              wrapProgram $out/bin/${pname} \
-                --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps} \
-                --prefix XCURSOR_THEME : "Adwaita" \
-                --prefix ALSA_PLUGIN_DIR : ${pipewire.lib}/lib/alsa-lib
-              mkdir -p $out/bin/assets
-              cp -a assets $out/bin'';
           };
-
-          release = false;
         };
 
-        packages.default = naersk.buildPackage rec {
-          pname = "bevy-flake-template";
-          src = ./.;
+        clientAttrs = sharedAttrs { pname = "client"; };
+        serverAttrs = sharedAttrs { pname = "server"; };
 
-          nativeBuildInputs = buildDeps;
-          buildInputs = runtimeDeps;
+        devAttrs = { release = false; };
+      in
+      rec {
+        packages = {
+          clientDev = naersk.buildPackage (clientAttrs // devAttrs);
+          serverDev = naersk.buildPackage (serverAttrs // devAttrs);
 
-          overrideMain = attrs: {
-            fixupPhase = ''
-              wrapProgram $out/bin/${pname} \
-                --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps} \
-                --prefix XCURSOR_THEME : "Adwaita" \
-                --prefix ALSA_PLUGIN_DIR : ${pipewire.lib}/lib/alsa-lib
-              mkdir -p $out/bin/assets
-              cp -a assets $out/bin'';
-          };
+          client = naersk.buildPackage clientAttrs;
+          server = naersk.buildPackage serverAttrs;
 
+          default = packages.client;
         };
 
-        # For `nix develop`
         devShells.default = pkgs.mkShell {
           # Fix for rust-analyzer in vscode
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
 
-          nativeBuildInputs = buildDeps ++ [ rustToolchain ];
+          nativeBuildInputs = buildDeps ++ [ rustStable ];
           buildInputs = runtimeDeps;
 
           LD_LIBRARY_PATH = "${lib.makeLibraryPath runtimeDeps}";
