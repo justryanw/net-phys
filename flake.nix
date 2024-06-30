@@ -48,18 +48,20 @@
           '';
         };
 
-        my-crate = craneLib.buildPackage (bevy-bin { pname = "bevy-flake-template"; });
-        my-crate-copy = craneLib.buildPackage (bevy-bin { pname = "copy"; });
+        my-crate-client = craneLib.buildPackage (bevy-bin { pname = "client"; });
+        my-crate-server = craneLib.buildPackage (bevy-bin { pname = "server"; });
 
       in
       {
         checks = {
-          inherit my-crate;
+          inherit my-crate-client;
         };
 
         packages = { 
-          default = my-crate;
-          copy = my-crate-copy;
+          client = my-crate-client;
+          server = my-crate-server;
+
+          default = self.packages.${system}.client;
         };
 
 
