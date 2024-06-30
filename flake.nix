@@ -26,7 +26,7 @@
           targets.x86_64-pc-windows-gnu.latest.rust-std
         ];
 
-        craneLib = ((crane.mkLib).overrrideToolchain toolchian);
+        craneLib = ((crane.mkLib nixpkgs.legacyPackages.${system}).overrideToolchain toolchian);
 
         buildDeps = (with pkgs; [
           pkg-config
@@ -76,10 +76,10 @@
 
           CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
 
-          # fixes issues related to libring
+          # Fixes issues related to libring
           TARGET_CC = "${pkgs.pkgsCross.mingwW64.stdenv.cc}/bin/${pkgs.pkgsCross.mingwW64.stdenv.cc.targetPrefix}cc";
 
-          #fixes issues related to openssl
+          # Fixes issues related to openssl
           OPENSSL_DIR = "${pkgs.openssl.dev}";
           OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
           OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include/";
@@ -88,6 +88,11 @@
             pkgsCross.mingwW64.stdenv.cc
             pkgsCross.mingwW64.windows.pthreads
           ];
+
+          postInstall = ''
+            mkdir -p $out/bin/assets
+            cp -a assets $out/bin
+          '';
         };
 
         my-crate-client = craneLib.buildPackage (bevy-bin { pname = "client"; });
