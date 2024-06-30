@@ -1,5 +1,5 @@
 [package]
-name = "bevy-flake-template"
+name = "net-phys"
 version = "0.1.0"
 edition = "2021"
 default-run = "client"
@@ -11,4 +11,4 @@ opt-level = 1
 opt-level = 3
 
 [dependencies]
-bevy = { version = "0.12", features = [ "wayland" ] }
+bevy = { version = "0.13", features = [ "wayland" ] }
