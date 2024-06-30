@@ -1,16 +1,32 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    crane.url = "github:ipetkov/crane";
-    crane.inputs.nixpkgs.follows = "nixpkgs";
+
+    crane = {
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, crane, flake-utils, ... }:
+  outputs = { self, nixpkgs, crane, fenix, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        craneLib = (crane.mkLib nixpkgs.legacyPackages.${system});
+
+        toolchian = with fenix.packages.${system}; combine [
+          minimal.rustc
+          minimal.cargo
+          targets.x86_64-pc-windows-gnu.latest.rust-std
+        ];
+
+        craneLib = ((crane.mkLib nixpkgs.legacyPackages.${system}).overrideToolchain toolchian);
 
         buildDeps = (with pkgs; [
           pkg-config
@@ -48,8 +64,41 @@
           '';
         };
 
+        bevy-bin-windows = { pname }: {
+          inherit pname;
+          src = ./.;
+
+          strictDeps = true;
+          doCheck = false;
+
+          nativeBuildInputs = buildDeps;
+          buildInputs = runtimeDeps;
+
+          CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
+
+          # Fixes issues related to libring
+          TARGET_CC = "${pkgs.pkgsCross.mingwW64.stdenv.cc}/bin/${pkgs.pkgsCross.mingwW64.stdenv.cc.targetPrefix}cc";
+
+          # Fixes issues related to openssl
+          OPENSSL_DIR = "${pkgs.openssl.dev}";
+          OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
+          OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include/";
+
+          depsBuildBuild = with pkgs; [
+            pkgsCross.mingwW64.stdenv.cc
+            pkgsCross.mingwW64.windows.pthreads
+          ];
+
+          postInstall = ''
+            mkdir -p $out/bin/assets
+            cp -a assets $out/bin
+          '';
+        };
+
         my-crate-client = craneLib.buildPackage (bevy-bin { pname = "client"; });
         my-crate-server = craneLib.buildPackage (bevy-bin { pname = "server"; });
+        my-crate-windows-client = craneLib.buildPackage (bevy-bin-windows { pname = "client"; });
+ 
 
       in
       {
@@ -57,9 +106,10 @@
           inherit my-crate-client;
         };
 
-        packages = { 
+        packages = {
           client = my-crate-client;
           server = my-crate-server;
+          windows = my-crate-windows-client;
 
           default = self.packages.${system}.client;
         };
