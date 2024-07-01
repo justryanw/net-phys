@@ -72,6 +72,7 @@
           doCheck = false;
 
           nativeBuildInputs = buildDeps;
+          # probably not necassary, need to check
           buildInputs = runtimeDeps;
 
           CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";

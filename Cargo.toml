@@ -1,5 +1,5 @@
 [package]
-name = "net-phys"
+name = "net_phys"
 version = "0.1.0"
 edition = "2021"
 default-run = "client"
@@ -12,3 +12,5 @@ opt-level = 3
 
 [dependencies]
 bevy = { version = "0.13", features = [ "wayland" ] }
+bevy_quinnet = "0.8.0"
+serde = "1.0.203"
