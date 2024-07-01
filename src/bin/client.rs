@@ -1,7 +1,13 @@
 use std::net::{IpAddr, Ipv4Addr};
 
 use bevy::prelude::*;
-use bevy_quinnet::{client::{certificate::CertificateVerificationMode, connection::ClientEndpointConfiguration, QuinnetClient, QuinnetClientPlugin}, shared::channels::ChannelsConfiguration};
+use bevy_quinnet::{
+    client::{
+        certificate::CertificateVerificationMode, connection::ClientEndpointConfiguration,
+        QuinnetClient, QuinnetClientPlugin,
+    },
+    shared::channels::ChannelsConfiguration,
+};
 
 use net_phys::protocol::ServerMessage;
 
@@ -45,19 +51,19 @@ fn start_connection(mut client: ResMut<QuinnetClient>) {
     );
 }
 
-
-
-fn handle_server_messages(
-    mut client: ResMut<QuinnetClient>,
-) {
+fn handle_server_messages(mut client: ResMut<QuinnetClient>) {
     while let Ok(Some((_, message))) = client.connection_mut().receive_message::<ServerMessage>() {
         match message {
-            ServerMessage::InitClient( client_id ) => {
+            ServerMessage::InitClient(client_id) => {
                 info!("InitClient");
-            },
-            ServerMessage::SpawnCube { owner_client_id, entity, position } => {
+            }
+            ServerMessage::SpawnCube {
+                owner_client_id,
+                entity,
+                position,
+            } => {
                 info!("SpawnCube");
-            },
+            }
             ServerMessage::CubeMoved { entity, position } => {
                 info!("CubeMoved");
             }

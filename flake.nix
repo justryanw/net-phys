@@ -21,9 +21,10 @@
         pkgs = nixpkgs.legacyPackages.${system};
 
         toolchian = with fenix.packages.${system}; combine [
-          minimal.rustc
-          minimal.cargo
-          targets.x86_64-pc-windows-gnu.latest.rust-std
+          stable.rustc
+          stable.cargo
+          stable.rustfmt
+          targets.x86_64-pc-windows-gnu.stable.rust-std
         ];
 
         craneLib = ((crane.mkLib nixpkgs.legacyPackages.${system}).overrideToolchain toolchian);
@@ -72,8 +73,6 @@
           doCheck = false;
 
           nativeBuildInputs = buildDeps;
-          # probably not necassary, need to check
-          buildInputs = runtimeDeps;
 
           CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
 
