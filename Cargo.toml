@@ -1,16 +1,8 @@
-[package]
-name = "net_phys"
-version = "0.1.0"
-edition = "2021"
-default-run = "client"
+[workspace]
+members = ["client", "server", "library"]
+resolver = "2"
 
-[profile.dev]
-opt-level = 1
-
-[profile.dev.pacakge."*"]
-opt-level = 3
-
-[dependencies]
-bevy = { version = "0.13", features = [ "wayland" ] }
-bevy_quinnet = "0.8.0"
-serde = "1.0.203"
+[workspace.dependencies]
+bevy = "0.13"
+bevy_quinnet = "0.8"
+serde = "1.0"

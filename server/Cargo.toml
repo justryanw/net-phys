@@ -1,0 +1,10 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+lib = { path = "../library" }
+bevy = { workspace = true }
+bevy_quinnet = { workspace = true }
+serde = { workspace = true }

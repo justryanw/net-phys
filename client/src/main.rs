@@ -9,7 +9,7 @@ use bevy_quinnet::{
     shared::channels::ChannelsConfiguration,
 };
 
-use net_phys::protocol::ServerMessage;
+use lib::protocol::ServerMessage;
 
 fn main() {
     App::new()
