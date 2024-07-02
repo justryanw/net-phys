@@ -27,7 +27,7 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@main
       - uses: cachix/cachix-action@v14
         with:
-          name: mycache
+          name: justryanw
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Check Nixpkgs inputs
         uses: DeterminateSystems/flake-checker-action@main
@@ -52,7 +52,7 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@main
       - uses: cachix/cachix-action@v14
         with:
-          name: mycache
+          name: justryanw
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Check Nixpkgs inputs
         uses: DeterminateSystems/flake-checker-action@main
