@@ -35,5 +35,5 @@ jobs:
         run: nix build .#windows-client
       - uses: actions/upload-artifact@v4
         with:
-          name: 'client.zip'
+          name: 'client'
           path: './result/bin'
