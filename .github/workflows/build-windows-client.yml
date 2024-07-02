@@ -35,4 +35,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: 'client.zip'
-          path: './result'
+          path: './result/bin'
