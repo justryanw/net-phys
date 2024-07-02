@@ -106,10 +106,8 @@
           '';
         };
 
-        cargoArtifacts = craneLib.buildDepsOnly (linux "client");
-
-        client = craneLib.buildPackage (linux "client") // { inherit cargoArtifacts; };
-        server = craneLib.buildPackage (linux "server") // { inherit cargoArtifacts; };
+        client = craneLib.buildPackage (linux "client");
+        server = craneLib.buildPackage (linux "server");
 
         windows-client = craneLib.buildPackage (windows "client");
         windows-server = craneLib.buildPackage (windows "server");
