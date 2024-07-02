@@ -51,13 +51,17 @@
 
         commonArgs = pname: {
           inherit pname;
-          version = "1.0.0";
+          inherit (craneLib.crateNameFromCargoToml { src = ./${pname}; }) version;
+
           src = ./.;
           cargoExtraArgs = "--package=${pname}";
+
+          strictDeps = true;
+
+          nativeBuildInputs = buildDeps;
         };
 
         linux = pname: (commonArgs pname) // {
-          nativeBuildInputs = buildDeps;
           buildInputs = runtimeDeps;
 
           postInstall = ''
@@ -69,11 +73,6 @@
         };
 
         windows = pname: (commonArgs pname) // {
-          strictDeps = true;
-          doCheck = false;
-
-          nativeBuildInputs = buildDeps ++ [ pkgs.zip ];
-
           CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
 
           # Fixes issues related to libring
@@ -93,7 +92,7 @@
             mkdir -p $out/bin/assets
             cp -a assets $out/bin
             cd $out/bin
-            zip -r ../${pname}.zip *
+            ${pkgs.zip}/bin/zip -r ../${pname}.zip *
             cd ..
             rm -r bin
           '';
