@@ -99,10 +99,6 @@
           postInstall = ''
             mkdir -p $out/bin/assets
             cp -a assets $out/bin
-            cd $out/bin
-            ${pkgs.zip}/bin/zip -r ../${pname}.zip *
-            cd ..
-            rm -r bin
           '';
         };
 
