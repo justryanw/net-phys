@@ -53,12 +53,18 @@
           inherit pname;
           inherit (craneLib.crateNameFromCargoToml { src = ./${pname}; }) version;
 
-          src = ./.;
-          cargoExtraArgs = "--package=${pname}";
-
-          strictDeps = true;
+          src = pkgs.lib.cleanSourceWith {
+            src = ./.;
+            filter = path: type:
+              (pkgs.lib.hasInfix "/assets/" path) ||
+              (craneLib.filterCargoSources path type)
+            ;
+          };
 
           nativeBuildInputs = buildDeps;
+
+          cargoExtraArgs = "--package=${pname}";
+          strictDeps = true;
         };
 
         linux = pname: (commonArgs pname) // {
@@ -73,6 +79,8 @@
         };
 
         windows = pname: (commonArgs pname) // {
+          doCheck = false;
+
           CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
 
           # Fixes issues related to libring
