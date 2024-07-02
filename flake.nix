@@ -21,9 +21,10 @@
         pkgs = nixpkgs.legacyPackages.${system};
 
         toolchian = with fenix.packages.${system}; combine [
-          minimal.rustc
-          minimal.cargo
-          targets.x86_64-pc-windows-gnu.latest.rust-std
+          stable.rustc
+          stable.cargo
+          stable.rustfmt
+          targets.x86_64-pc-windows-gnu.stable.rust-std
         ];
 
         craneLib = ((crane.mkLib nixpkgs.legacyPackages.${system}).overrideToolchain toolchian);
@@ -35,7 +36,7 @@
           mold
         ]);
 
-        runtimeDeps = (with pkgs; [
+        runtimeDeps = pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [
           libxkbcommon
           alsa-lib
           udev
@@ -48,31 +49,37 @@
           libX11
         ]));
 
-        bevy-bin = { pname }: {
+        commonArgs = pname: {
           inherit pname;
-          src = ./.;
+          inherit (craneLib.crateNameFromCargoToml { src = ./${pname}; }) version;
+
+          src = pkgs.lib.cleanSourceWith {
+            src = ./.;
+            filter = path: type:
+              (pkgs.lib.hasInfix "/assets/" path) ||
+              (craneLib.filterCargoSources path type)
+            ;
+          };
 
           nativeBuildInputs = buildDeps;
+
+          cargoExtraArgs = "--package=${pname}";
+          strictDeps = true;
+        };
+
+        linux = pname: (commonArgs pname) // {
           buildInputs = runtimeDeps;
 
           postInstall = ''
             wrapProgram $out/bin/${pname} \
               --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps} \
               --prefix XCURSOR_THEME : "Adwaita"
-            mkdir -p $out/bin/assets
             cp -a assets $out/bin
           '';
         };
 
-        bevy-bin-windows = { pname }: {
-          inherit pname;
-          src = ./.;
-
-          strictDeps = true;
+        windows = pname: (commonArgs pname) // {
           doCheck = false;
-
-          nativeBuildInputs = buildDeps;
-          buildInputs = runtimeDeps;
 
           CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
 
@@ -92,28 +99,28 @@
           postInstall = ''
             mkdir -p $out/bin/assets
             cp -a assets $out/bin
+            cd $out/bin
+            ${pkgs.zip}/bin/zip -r ../${pname}.zip *
+            cd ..
+            rm -r bin
           '';
         };
 
-        my-crate-client = craneLib.buildPackage (bevy-bin { pname = "client"; });
-        my-crate-server = craneLib.buildPackage (bevy-bin { pname = "server"; });
-        my-crate-windows-client = craneLib.buildPackage (bevy-bin-windows { pname = "client"; });
- 
+        client = craneLib.buildPackage (linux "client");
+        server = craneLib.buildPackage (linux "server");
 
+        windows-client = craneLib.buildPackage (windows "client");
+        windows-server = craneLib.buildPackage (windows "server");
       in
       {
         checks = {
-          inherit my-crate-client;
+          inherit client server;
         };
 
         packages = {
-          client = my-crate-client;
-          server = my-crate-server;
-          windows = my-crate-windows-client;
-
-          default = self.packages.${system}.client;
+          inherit client server windows-client windows-server;
+          default = client;
         };
-
 
         devShells.default = craneLib.devShell {
           checks = self.checks.${system};
