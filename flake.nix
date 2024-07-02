@@ -62,7 +62,7 @@
             wrapProgram $out/bin/${pname} \
               --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps} \
               --prefix XCURSOR_THEME : "Adwaita"
-            cp -a assets $out
+            cp -a assets $out/bin
           '';
         };
 
