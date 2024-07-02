@@ -70,11 +70,12 @@
           inherit pname;
           version = "1.0.0";
           src = ./.;
+          cargoExtraArgs = "--package=${pname}";
 
           strictDeps = true;
           doCheck = false;
 
-          nativeBuildInputs = buildDeps;
+          nativeBuildInputs = buildDeps ++ [ pkgs.zip ];
 
           CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
 
@@ -94,6 +95,10 @@
           postInstall = ''
             mkdir -p $out/bin/assets
             cp -a assets $out/bin
+            cd $out/bin
+            zip -r ../${pname}.zip *
+            cd ..
+            rm -r bin
           '';
         };
 
