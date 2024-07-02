@@ -37,8 +37,6 @@ jobs:
         with:
           name: 'client'
           path: './result/bin'
-      - name: Build Server
-        run: nix build .#windows-server
   build-server:
     name: 'Build Windows Server'
     environment:
