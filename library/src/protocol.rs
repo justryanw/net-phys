@@ -1,22 +1,12 @@
 use bevy::prelude::*;
-use bevy_quinnet::shared::ClientId;
+use bevy_quinnet::shared::{channels::{ChannelId, ChannelType, ChannelsConfiguration}, ClientId};
 use serde::{Deserialize, Serialize};
 
 // Client
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum PaddleInput {
-    #[default]
-    None,
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ClientMessage {
-    PaddleInput(PaddleInput),
+    PlayerInput(Vec2),
 }
 
 // Server
@@ -35,3 +25,22 @@ pub enum ServerMessage {
     }
 }
 
+#[repr(u8)]
+pub enum ServerChannel {
+    CubeUpdates,
+}
+
+impl Into<ChannelId> for ServerChannel {
+    fn into(self) -> ChannelId {
+        self as ChannelId
+    }
+}
+
+impl ServerChannel {
+    pub fn channels_configuration() -> ChannelsConfiguration {
+        ChannelsConfiguration::from_types(vec![
+            ChannelType::Unreliable,
+        ])
+        .unwrap()
+    }
+}
