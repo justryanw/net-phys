@@ -16,7 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build-windows-client:
+    name: 'Build Windows Client'
     environment:
       name: build-windows-client
     runs-on: ubuntu-latest
