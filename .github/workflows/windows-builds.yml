@@ -8,11 +8,10 @@ on:
 
 permissions:
   contents: read
-  pages: write
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: 'windows builds'
   cancel-in-progress: true
 
 jobs:
