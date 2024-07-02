@@ -36,7 +36,7 @@
           mold
         ]);
 
-        runtimeDeps = (with pkgs; [
+        runtimeDeps = pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [
           libxkbcommon
           alsa-lib
           udev
@@ -49,12 +49,14 @@
           libX11
         ]));
 
-        bevy-bin = { pname }: {
+        commonArgs = pname: {
           inherit pname;
           version = "1.0.0";
           src = ./.;
           cargoExtraArgs = "--package=${pname}";
+        };
 
+        linux = pname: (commonArgs pname) // {
           nativeBuildInputs = buildDeps;
           buildInputs = runtimeDeps;
 
@@ -66,12 +68,7 @@
           '';
         };
 
-        bevy-bin-windows = { pname }: {
-          inherit pname;
-          version = "1.0.0";
-          src = ./.;
-          cargoExtraArgs = "--package=${pname}";
-
+        windows = pname: (commonArgs pname) // {
           strictDeps = true;
           doCheck = false;
 
@@ -102,25 +99,23 @@
           '';
         };
 
-        my-crate-client = craneLib.buildPackage (bevy-bin { pname = "client"; });
-        my-crate-server = craneLib.buildPackage (bevy-bin { pname = "server"; });
-        my-crate-windows-client = craneLib.buildPackage (bevy-bin-windows { pname = "client"; });
- 
+        cargoArtifacts = craneLib.buildDepsOnly (linux "client");
 
+        client = craneLib.buildPackage (linux "client") // { inherit cargoArtifacts; };
+        server = craneLib.buildPackage (linux "server") // { inherit cargoArtifacts; };
+
+        windows-client = craneLib.buildPackage (windows "client");
+        windows-server = craneLib.buildPackage (windows "server");
       in
       {
         checks = {
-          inherit my-crate-client;
+          inherit client server;
         };
 
         packages = {
-          client = my-crate-client;
-          server = my-crate-server;
-          windows = my-crate-windows-client;
-
-          default = self.packages.${system}.client;
+          inherit client server windows-client windows-server;
+          default = client;
         };
-
 
         devShells.default = craneLib.devShell {
           checks = self.checks.${system};
