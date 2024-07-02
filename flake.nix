@@ -51,7 +51,9 @@
 
         bevy-bin = { pname }: {
           inherit pname;
+          version = "1.0.0";
           src = ./.;
+          cargoExtraArgs = "--package=${pname}";
 
           nativeBuildInputs = buildDeps;
           buildInputs = runtimeDeps;
@@ -60,13 +62,13 @@
             wrapProgram $out/bin/${pname} \
               --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps} \
               --prefix XCURSOR_THEME : "Adwaita"
-            mkdir -p $out/bin/assets
-            cp -a assets $out/bin
+            cp -a assets $out
           '';
         };
 
         bevy-bin-windows = { pname }: {
           inherit pname;
+          version = "1.0.0";
           src = ./.;
 
           strictDeps = true;

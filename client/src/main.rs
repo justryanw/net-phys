@@ -1,4 +1,8 @@
-use std::net::{IpAddr, Ipv4Addr};
+use std::{
+    env,
+    net::{IpAddr, Ipv4Addr},
+    path::PathBuf,
+};
 
 use bevy::prelude::*;
 use bevy_quinnet::{
@@ -12,8 +16,20 @@ use bevy_quinnet::{
 use lib::protocol::ServerMessage;
 
 fn main() {
+    let asset_path = match env::var("CARGO_MANIFEST_DIR") {
+        Ok(manifest_dir) => PathBuf::from(manifest_dir)
+            .parent()
+            .unwrap()
+            .to_path_buf()
+            .join("assets"),
+        _ => PathBuf::from("assets"),
+    };
+
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            file_path: asset_path.to_str().unwrap().to_string(),
+            ..default()
+        }))
         .add_plugins(QuinnetClientPlugin::default())
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, (setup, start_connection))
