@@ -15,10 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: 'Windows Builds'
+  build-client:
+    name: 'Build Windows Client'
     environment:
-      name: Windows Builds
+      name: 'Build Windows Client'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,6 +37,23 @@ jobs:
         with:
           name: 'client'
           path: './result/bin'
+      - name: Build Server
+        run: nix build .#windows-server
+  build-server:
+    name: 'Build Windows Server'
+    environment:
+      name: 'Build Windows Server'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Check Nixpkgs inputs
+        uses: DeterminateSystems/flake-checker-action@main
+        with:
+          fail-mode: true
       - name: Build Server
         run: nix build .#windows-server
       - name: Upload Server
