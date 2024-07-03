@@ -33,9 +33,9 @@ fn main() {
             ..default()
         }))
         .add_plugins(QuinnetClientPlugin::default())
-        .insert_resource(ClearColor(Color::BLACK))
+        .insert_resource(ClearColor(Color::DARK_GRAY))
         .add_systems(Startup, (setup, start_connection))
-        .add_systems(Update, (rotate, handle_server_messages))
+        .add_systems(Update, (update, handle_server_messages))
         .run();
 }
 
@@ -50,9 +50,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn rotate(mut query: Query<&mut Transform, With<Sprite>>, time: Res<Time>) {
+fn update(mut query: Query<&mut Transform, With<Sprite>>, time: Res<Time>) {
     for mut bevy in &mut query {
-        bevy.rotate_local_z(-time.delta_seconds());
+
     }
 }
 
@@ -83,7 +83,7 @@ fn handle_server_messages(mut client: ResMut<QuinnetClient>) {
                 info!("SpawnCube");
             }
             ServerMessage::CubeMoved { entity, position } => {
-                info!("CubeMoved");
+                // info!("CubeMoved, {position}");
             }
         }
     }

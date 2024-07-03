@@ -8,8 +8,8 @@ use std::{
 use bevy::{app::ScheduleRunnerPlugin, log::LogPlugin, prelude::*};
 use bevy_quinnet::{
     server::{
-        certificate::CertificateRetrievalMode, ConnectionEvent, QuinnetServer, QuinnetServerPlugin,
-        ServerEndpointConfiguration,
+        certificate::CertificateRetrievalMode, ConnectionEvent, ConnectionLostEvent, Endpoint,
+        QuinnetServer, QuinnetServerPlugin, ServerEndpointConfiguration,
     },
     shared::{channels::ChannelsConfiguration, ClientId},
 };
@@ -72,7 +72,9 @@ fn start_listening(mut server: ResMut<QuinnetServer>) {
 fn handle_server_events(
     mut commands: Commands,
     mut connection_events: EventReader<ConnectionEvent>,
+    mut connection_lost_events: EventReader<ConnectionLostEvent>,
     mut players: ResMut<Players>,
+    mut server: ResMut<QuinnetServer>,
 ) {
     for client in connection_events.read() {
         players.map.insert(client.id, Player { input: Vec2::ZERO });
@@ -84,6 +86,20 @@ fn handle_server_events(
             TransformBundle::default(),
         ));
     }
+
+    for client in connection_lost_events.read() {
+        handle_disconnect(server.endpoint_mut(), &mut players, client.id);
+    }
+}
+
+fn handle_disconnect(endpoint: &mut Endpoint, players: &mut ResMut<Players>, client_id: ClientId) {
+    players.map.remove(&client_id);
+
+    let _ = endpoint.disconnect_client(client_id);
+
+    // TODO remove player on disconnect
+    // let Some((entity, _)) = cubes.iter_mut().find(|(_, cube)| cube.player_id == client.id) else { return; };
+    // commands.entity(entity).despawn();
 }
 
 fn handle_client_messages(mut server: ResMut<QuinnetServer>, mut players: ResMut<Players>) {
@@ -112,12 +128,12 @@ fn update(
             continue;
         };
 
-        let Vec2 { x, y } = player.input.normalize();
+        let Vec2 { x, y } = player.input.normalize_or_zero();
 
-        if player.input != Vec2::ZERO {
+        // if player.input != Vec2::ZERO {
             transform.translation.x += x;
             transform.translation.y += y;
-        }
+        // }
 
         server.endpoint().try_send_group_message_on(
             players.map.keys().into_iter(),

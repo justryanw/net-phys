@@ -121,6 +121,20 @@
         devShells.default = craneLib.devShell {
           checks = self.checks.${system};
 
+          buildInputs = [
+            pkgs.cargo-watch
+            (pkgs.writeShellScriptBin "serve" ''
+              kill $(${pkgs.lsof}/bin/lsof -t -i:6000)
+              kill $(pgrep cargo-watch)
+              ${pkgs.tmux}/bin/tmux new-session -d 'cargo watch -- cargo run -p client' \; \
+                select-pane -T 'Client' \; \
+                split-window -h 'cargo watch -- cargo run -p server' \; \
+                select-pane -T 'Server' \; \
+                attach
+            '')
+          ];
+
+
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
           LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath runtimeDeps}";
           XCURSOR_THEME = "Adwaita";
