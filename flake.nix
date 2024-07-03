@@ -126,9 +126,9 @@
             (pkgs.writeShellScriptBin "serve" ''
               kill $(${pkgs.lsof}/bin/lsof -t -i:6000)
               kill $(pgrep cargo-watch)
-              ${pkgs.tmux}/bin/tmux new-session -d 'cargo watch -- cargo run -p client' \; \
+              ${pkgs.tmux}/bin/tmux new-session -d 'cargo run -p client' \; \
                 select-pane -T 'Client' \; \
-                split-window -h 'cargo watch -- cargo run -p server' \; \
+                split-window -h 'cargo run -p server' \; \
                 select-pane -T 'Server' \; \
                 attach
             '')

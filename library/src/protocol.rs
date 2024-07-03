@@ -9,6 +9,21 @@ pub enum ClientMessage {
     PlayerInput(Vec2),
 }
 
+#[repr(u8)]
+pub enum ClientChannel {
+    CubeInput,
+}
+impl Into<ChannelId> for ClientChannel {
+    fn into(self) -> ChannelId {
+        self as ChannelId
+    }
+}
+impl ClientChannel {
+    pub fn channels_configuration() -> ChannelsConfiguration {
+        ChannelsConfiguration::from_types(vec![ChannelType::OrderedReliable]).unwrap()
+    }
+}
+
 // Server
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -131,8 +131,8 @@ fn update(
         let Vec2 { x, y } = player.input.normalize_or_zero();
 
         // if player.input != Vec2::ZERO {
-            transform.translation.x += x;
-            transform.translation.y += y;
+            transform.translation.x += x * 0.1;
+            transform.translation.y += y * 0.1;
         // }
 
         server.endpoint().try_send_group_message_on(

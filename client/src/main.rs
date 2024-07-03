@@ -6,7 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-use bevy::prelude::*;
+use bevy::{input::keyboard, prelude::*};
 use bevy_quinnet::{
     client::{
         certificate::CertificateVerificationMode, connection::ClientEndpointConfiguration,
@@ -15,7 +15,7 @@ use bevy_quinnet::{
     shared::channels::ChannelsConfiguration,
 };
 
-use lib::protocol::ServerMessage;
+use lib::protocol::{ClientChannel, ClientMessage, ServerMessage};
 
 fn main() {
     let asset_path = match env::var("CARGO_MANIFEST_DIR") {
@@ -50,10 +50,29 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn update(mut query: Query<&mut Transform, With<Sprite>>, time: Res<Time>) {
-    for mut bevy in &mut query {
+fn update(
+    mut query: Query<&mut Transform, With<Sprite>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    client: Res<QuinnetClient>,
+) {
+    let mut input = Vec2::ZERO;
 
-    }
+    if keyboard_input.pressed(KeyCode::KeyA) {
+        input.x -= 1.0;
+    };
+    if keyboard_input.pressed(KeyCode::KeyD) {
+        input.x += 1.0;
+    };
+    if keyboard_input.pressed(KeyCode::KeyW) {
+        input.y += 1.0;
+    };
+    if keyboard_input.pressed(KeyCode::KeyS) {
+        input.y -= 1.0;
+    };
+
+    client
+        .connection()
+        .try_send_message_on(ClientChannel::CubeInput, ClientMessage::PlayerInput(input))
 }
 
 fn start_connection(mut client: ResMut<QuinnetClient>) {
@@ -69,7 +88,7 @@ fn start_connection(mut client: ResMut<QuinnetClient>) {
     );
 }
 
-fn handle_server_messages(mut client: ResMut<QuinnetClient>) {
+fn handle_server_messages(mut client: ResMut<QuinnetClient>, mut bevy: Query<&mut Transform, With<Sprite>>) {
     while let Ok(Some((_, message))) = client.connection_mut().receive_message::<ServerMessage>() {
         match message {
             ServerMessage::InitClient(client_id) => {
@@ -83,7 +102,12 @@ fn handle_server_messages(mut client: ResMut<QuinnetClient>) {
                 info!("SpawnCube");
             }
             ServerMessage::CubeMoved { entity, position } => {
-                // info!("CubeMoved, {position}");
+                info!("CubeMoved, {position}");
+
+                let Ok(mut transform) = bevy.get_single_mut() else { continue; };
+
+                transform.translation.x = position.x;
+                transform.translation.y = position.y;
             }
         }
     }
