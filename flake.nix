@@ -86,35 +86,45 @@
             };
           };
 
-        build-workspace-member = workspaceMemeber: cargoNix.workspaceMembers.${workspaceMemeber}.build;
+        buildWorkspaceMember = workspaceMemeber: cargoNix.workspaceMembers.${workspaceMemeber}.build;
 
-        pkgs-for-rust = inputs.nixpkgs-for-rust.legacyPackages.${system};
+        pkgsForRust = inputs.nixpkgs-for-rust.legacyPackages.${system};
 
         overlays = [
           (final: prev: {
-            rustc = pkgs-for-rust.rustc;
-            cargo = pkgs-for-rust.cargo;
+            rustc = pkgsForRust.rustc;
+            cargo = pkgsForRust.cargo;
           })
         ];
+
+        serveScript = pkgs.writeShellScriptBin "serve" ''
+          pkill ${projectName}
+          ${pkgs.tmux}/bin/tmux kill-session
+          ${pkgs.tmux}/bin/tmux new -s Serve -d 'cargo run -p client; ${pkgs.tmux}/bin/tmux kill-session' \; \
+            select-pane -T 'Client' \; \
+            split-window -h 'cargo run -p server' \; \
+            select-pane -T 'Server' \; \
+            attach
+        '';
       in
       {
         _module.args.pkgs = import inputs.nixpkgs { inherit system overlays; config = { }; };
 
         packages = {
-          client = build-workspace-member "client";
-          server = build-workspace-member "server";
-          default = self.packages.${system}.client;
+          client = buildWorkspaceMember "client";
+          server = buildWorkspaceMember "server";
         };
 
         apps = {
           client.program = "${self.packages.${system}.client}/bin/${self.packages.${system}.client.name}";
           server.program = "${self.packages.${system}.server}/bin/${self.packages.${system}.server.name}";
+          default = self.apps.${system}.client;
         };
 
         devShells.default = pkgs.mkShell {
           inherit buildInputs;
 
-          nativeBuildInputs = with pkgs; [
+          nativeBuildInputs = (with pkgs; [
             cargo
             rustc
             pkg-config
@@ -122,16 +132,8 @@
             clang
             mold
             cargo-watch
-
-            (writeShellScriptBin "serve" ''
-              pkill ${projectName}
-              ${tmux}/bin/tmux kill-session
-              ${tmux}/bin/tmux new -s Serve -d 'cargo run -p client; ${tmux}/bin/tmux kill-session' \; \
-                select-pane -T 'Client' \; \
-                split-window -h 'cargo run -p server' \; \
-                select-pane -T 'Server' \; \
-                attach
-            '')
+          ]) ++ [
+            serveScript
           ];
 
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
