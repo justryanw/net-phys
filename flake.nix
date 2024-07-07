@@ -32,8 +32,6 @@
 
     perSystem = { system, pkgs, ... }:
       let
-        name = "client";
-
         buildInputs = (with pkgs; [
           libxkbcommon
           alsa-lib
@@ -47,7 +45,7 @@
           libX11
         ]));
 
-        cargoNix = pkgs.callPackage
+        cargoNix = name: pkgs.callPackage
           (crate2nix.tools.${system}.generatedCargoNix {
             inherit name;
             src = ./.;
@@ -73,6 +71,8 @@
             };
           };
 
+        build-package = name: (cargoNix name).workspaceMembers.${name}.build;
+
         pkgs-for-rust = inputs.nixpkgs-for-rust.legacyPackages.${system};
 
         overlays = [
@@ -86,8 +86,8 @@
         _module.args.pkgs = import inputs.nixpkgs { inherit system overlays; config = { }; };
 
         packages = {
-          client = cargoNix.workspaceMembers.client.build;
-          server = cargoNix.workspaceMembers.server.build;
+          client = build-package "client";
+          server = build-package "server";
         };
 
         devShells.default = pkgs.mkShell {
@@ -97,6 +97,7 @@
             cargo
             rustc
             pkg-config
+            clang
           ];
 
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
