@@ -1,42 +1,38 @@
 {
+  nixConfig = {
+    extra-trusted-public-keys = "justryanw.cachix.org-1:oan1YuatPBqGNFEflzCmB+iwLPtzq1S1LivN3hUzu60=";
+    extra-substituters = "https://justryanw.cachix.org";
+    allow-import-from-derivation = true;
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    crane = {
-      url = "github:ipetkov/crane";
-      inputs.nixpkgs.follows = "nixpkgs";
+    # TODO remove when 1.79 is merged into nixpkgs
+    nixpkgs-for-rust.url = "github:NixOS/nixpkgs/staging";
+
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
-    fenix = {
-      url = "github:nix-community/fenix";
+    crate2nix = {
+      url = "github:nix-community/crate2nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, crane, fenix, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = inputs @ { self, flake-parts, crate2nix, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
+
+    perSystem = { system, pkgs, lib, ... }:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-
-        toolchian = with fenix.packages.${system}; combine [
-          stable.rustc
-          stable.cargo
-          stable.rustfmt
-          targets.x86_64-pc-windows-gnu.stable.rust-std
-        ];
-
-        craneLib = ((crane.mkLib nixpkgs.legacyPackages.${system}).overrideToolchain toolchian);
-
-        buildDeps = (with pkgs; [
-          pkg-config
-          makeWrapper
-          clang
-          mold
-        ]);
-
-        runtimeDeps = pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [
+        buildInputs = (with pkgs; [
           libxkbcommon
           alsa-lib
           udev
@@ -49,84 +45,74 @@
           libX11
         ]));
 
-        commonArgs = pname: {
-          inherit pname;
-          inherit (craneLib.crateNameFromCargoToml { src = ./${pname}; }) version;
+        porjectName = "net-phys";
 
-          src = pkgs.lib.cleanSourceWith {
+        workspaceMemberOverride = workspaceMember: attrs: {
+          name = "${porjectName}-${workspaceMember}-${attrs.version}";
+        };
+
+        cargoNix = pkgs.callPackage
+          (crate2nix.tools.${system}.generatedCargoNix {
+            name = porjectName;
             src = ./.;
-            filter = path: type:
-              (pkgs.lib.hasInfix "/assets/" path) ||
-              (craneLib.filterCargoSources path type)
-            ;
+          })
+          {
+            defaultCrateOverrides = pkgs.defaultCrateOverrides // {
+              wayland-sys = atts: {
+                nativeBuildInputs = with pkgs; [ pkg-config ];
+                buildInputs = with pkgs; [ wayland ];
+              };
+
+              client = attrs: ((workspaceMemberOverride "client" attrs) // {
+                nativeBuildInputs = [ pkgs.makeWrapper ];
+
+                postInstall = ''
+                  wrapProgram $out/bin/client \
+                    --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath buildInputs} \
+                    --prefix XCURSOR_THEME : "Adwaita"
+                  mkdir -p $out/bin/assets
+                  cp -a assets $out/bin
+                '';
+              });
+
+              server = (workspaceMemberOverride "server");
+            };
           };
 
-          nativeBuildInputs = buildDeps;
+        build-workspace-member = workspaceMemeber: cargoNix.workspaceMembers.${workspaceMemeber}.build;
 
-          cargoExtraArgs = "--package=${pname}";
-          strictDeps = true;
-        };
+        pkgs-for-rust = inputs.nixpkgs-for-rust.legacyPackages.${system};
 
-        linux = pname: (commonArgs pname) // {
-          buildInputs = runtimeDeps;
-
-          postInstall = ''
-            wrapProgram $out/bin/${pname} \
-              --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps} \
-              --prefix XCURSOR_THEME : "Adwaita"
-            cp -a assets $out/bin
-          '';
-        };
-
-        windows = pname: (commonArgs pname) // {
-          doCheck = false;
-
-          CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
-
-          # Fixes issues related to libring
-          TARGET_CC = "${pkgs.pkgsCross.mingwW64.stdenv.cc}/bin/${pkgs.pkgsCross.mingwW64.stdenv.cc.targetPrefix}cc";
-
-          # Fixes issues related to openssl
-          OPENSSL_DIR = "${pkgs.openssl.dev}";
-          OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
-          OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include/";
-
-          depsBuildBuild = with pkgs; [
-            pkgsCross.mingwW64.stdenv.cc
-            pkgsCross.mingwW64.windows.pthreads
-          ];
-
-          postInstall = ''
-            mkdir -p $out/bin/assets
-            cp -a assets $out/bin
-          '';
-        };
-
-        client = craneLib.buildPackage (linux "client");
-        server = craneLib.buildPackage (linux "server");
-
-        windows-client = craneLib.buildPackage (windows "client");
-        windows-server = craneLib.buildPackage (windows "server");
+        overlays = [
+          (final: prev: {
+            rustc = pkgs-for-rust.rustc;
+            cargo = pkgs-for-rust.cargo;
+          })
+        ];
       in
       {
-        checks = {
-          inherit client server;
-        };
+        _module.args.pkgs = import inputs.nixpkgs { inherit system overlays; config = { }; };
 
         packages = {
-          inherit client server windows-client windows-server;
-          default = client;
+          client = build-workspace-member "client";
+          server = build-workspace-member "server";
+          default = self.packages.${system}.client;
         };
 
-        devShells.default = craneLib.devShell {
-          checks = self.checks.${system};
+        devShells.default = pkgs.mkShell {
+          inherit buildInputs;
 
-          buildInputs = [
-            pkgs.cargo-watch
-            (pkgs.writeShellScriptBin "serve" ''
-              kill $(${pkgs.lsof}/bin/lsof -t -i:6000)
-              kill $(pgrep cargo-watch)
-              ${pkgs.tmux}/bin/tmux new-session -d 'cargo run -p client' \; \
+          nativeBuildInputs = with pkgs; [
+            cargo
+            rustc
+            pkg-config
+            rustfmt
+            clang
+            mold
+
+            (writeShellScriptBin "serve" ''
+              kill $(${lsof}/bin/lsof -t -i:6000)
+              ${tmux}/bin/tmux new-session -d 'cargo run -p client' \; \
                 select-pane -T 'Client' \; \
                 split-window -h 'cargo run -p server' \; \
                 select-pane -T 'Server' \; \
@@ -134,10 +120,10 @@
             '')
           ];
 
-
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
-          LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath runtimeDeps}";
+          LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath buildInputs}";
           XCURSOR_THEME = "Adwaita";
         };
-      });
+      };
+  };
 }
