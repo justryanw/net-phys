@@ -22,7 +22,7 @@
     };
   };
 
-  outputs = inputs @ { flake-parts, crate2nix, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs @ { self, flake-parts, crate2nix, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -30,7 +30,7 @@
       "aarch64-darwin"
     ];
 
-    perSystem = { system, pkgs, ... }:
+    perSystem = { system, pkgs, lib, ... }:
       let
         buildInputs = (with pkgs; [
           libxkbcommon
@@ -45,9 +45,11 @@
           libX11
         ]));
 
-        cargoNix = name: pkgs.callPackage
+        porjectName = "net-phys";
+
+        cargoNix = workspaceMember: pkgs.callPackage
           (crate2nix.tools.${system}.generatedCargoNix {
-            inherit name;
+            name = workspaceMember;
             src = ./.;
           })
           {
@@ -57,11 +59,13 @@
                 buildInputs = with pkgs; [ wayland ];
               };
 
-              ${name} = attrs: {
+              ${workspaceMember} = attrs: {
+                name = "${porjectName}-${workspaceMember}-${attrs.version}";
+
                 nativeBuildInputs = [ pkgs.makeWrapper ];
 
                 postInstall = ''
-                  wrapProgram $out/bin/${name} \
+                  wrapProgram $out/bin/${workspaceMember} \
                     --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath buildInputs} \
                     --prefix XCURSOR_THEME : "Adwaita"
                   mkdir -p $out/bin/assets
@@ -71,7 +75,7 @@
             };
           };
 
-        build-package = name: (cargoNix name).workspaceMembers.${name}.build;
+        build-workspace-member = workspaceMemeber: (cargoNix workspaceMemeber).workspaceMembers.${workspaceMemeber}.build;
 
         pkgs-for-rust = inputs.nixpkgs-for-rust.legacyPackages.${system};
 
@@ -86,8 +90,9 @@
         _module.args.pkgs = import inputs.nixpkgs { inherit system overlays; config = { }; };
 
         packages = {
-          client = build-package "client";
-          server = build-package "server";
+          client = build-workspace-member "client";
+          server = build-workspace-member "server";
+          default = self.packages.${system}.client;
         };
 
         devShells.default = pkgs.mkShell {
