@@ -97,7 +97,9 @@
             cargo
             rustc
             pkg-config
+            rustfmt
             clang
+            mold
           ];
 
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";

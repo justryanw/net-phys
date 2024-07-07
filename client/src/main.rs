@@ -1,12 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{
-    env,
-    net::{IpAddr, Ipv4Addr},
-    path::PathBuf,
-};
+use std::
+    net::{IpAddr, Ipv4Addr}
+;
 
-use bevy::{input::keyboard, prelude::*};
+use bevy::prelude::*;
 use bevy_quinnet::{
     client::{
         certificate::CertificateVerificationMode, connection::ClientEndpointConfiguration,
@@ -18,20 +16,8 @@ use bevy_quinnet::{
 use lib::protocol::{ClientChannel, ClientMessage, ServerMessage};
 
 fn main() {
-    let asset_path = match env::var("CARGO_MANIFEST_DIR") {
-        Ok(manifest_dir) => PathBuf::from(manifest_dir)
-            .parent()
-            .unwrap()
-            .to_path_buf()
-            .join("assets"),
-        _ => PathBuf::from("assets"),
-    };
-
     App::new()
-        .add_plugins(DefaultPlugins.set(AssetPlugin {
-            file_path: asset_path.to_str().unwrap().to_string(),
-            ..default()
-        }))
+        .add_plugins(DefaultPlugins)
         .add_plugins(QuinnetClientPlugin::default())
         .insert_resource(ClearColor(Srgba::gray(0.25).into()))
         .add_systems(Startup, (setup, start_connection))
@@ -51,7 +37,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn update(
-    mut query: Query<&mut Transform, With<Sprite>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     client: Res<QuinnetClient>,
 ) {
