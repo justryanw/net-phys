@@ -32,7 +32,7 @@
 
     perSystem = { system, pkgs, ... }:
       let
-        name = "net-phys";
+        name = "client";
 
         buildInputs = (with pkgs; [
           libxkbcommon
@@ -63,8 +63,6 @@
                 nativeBuildInputs = [ pkgs.makeWrapper ];
 
                 postInstall = ''
-                  rustc --version --verbose
-
                   wrapProgram $out/bin/${name} \
                     --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath buildInputs} \
                     --prefix XCURSOR_THEME : "Adwaita"
