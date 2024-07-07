@@ -3,6 +3,10 @@ name = "client"
 version = "0.2.0"
 edition = "2021"
 
+[[bin]]
+name = "net-phys-client"
+path = "src/main.rs"
+
 [dependencies]
 lib = { path = "../library" }
 bevy = { workspace = true }

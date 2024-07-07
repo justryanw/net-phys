@@ -32,24 +32,11 @@ struct Cube {
 }
 
 fn main() {
-    let asset_path = match env::var("CARGO_MANIFEST_DIR") {
-        Ok(manifest_dir) => PathBuf::from(manifest_dir)
-            .parent()
-            .unwrap()
-            .to_path_buf()
-            .join("assets"),
-        _ => PathBuf::from("assets"),
-    };
-
     App::new()
         .add_plugins((
             ScheduleRunnerPlugin::default(),
             LogPlugin::default(),
             QuinnetServerPlugin::default(),
-            AssetPlugin {
-                file_path: asset_path.to_str().unwrap().to_string(),
-                ..default()
-            },
         ))
         .insert_resource(Players::default())
         .add_systems(Startup, start_listening)

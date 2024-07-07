@@ -45,15 +45,13 @@
           libX11
         ]));
 
-        porjectName = "net-phys";
+        projectName = "net-phys";
 
-        workspaceMemberOverride = workspaceMember: attrs: {
-          name = "${porjectName}-${workspaceMember}-${attrs.version}";
-        };
+        workspaceMemberName = workspaceMember: attrs: "${projectName}-${workspaceMember}-${attrs.version}";
 
         cargoNix = pkgs.callPackage
           (crate2nix.tools.${system}.generatedCargoNix {
-            name = porjectName;
+            name = projectName;
             src = ./.;
           })
           {
@@ -63,19 +61,28 @@
                 buildInputs = with pkgs; [ wayland ];
               };
 
-              client = attrs: ((workspaceMemberOverride "client" attrs) // {
+              client = attrs: rec {
+                name = workspaceMemberName "client" attrs;
+
                 nativeBuildInputs = [ pkgs.makeWrapper ];
 
                 postInstall = ''
-                  wrapProgram $out/bin/client \
-                    --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath buildInputs} \
+                  mv $out/bin/${projectName}-client $out/bin/${name}
+                  wrapProgram $out/bin/${name} \
+                    --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath buildInputs} \
                     --prefix XCURSOR_THEME : "Adwaita"
                   mkdir -p $out/bin/assets
                   cp -a assets $out/bin
                 '';
-              });
+              };
 
-              server = (workspaceMemberOverride "server");
+              server = attrs: rec {
+                name = workspaceMemberName "server" attrs;
+
+                postInstall = ''
+                  mv $out/bin/${projectName}-server $out/bin/${name}
+                '';
+              };
             };
           };
 
@@ -99,6 +106,11 @@
           default = self.packages.${system}.client;
         };
 
+        apps = {
+          client.program = "${self.packages.${system}.client}/bin/${self.packages.${system}.client.name}";
+          server.program = "${self.packages.${system}.server}/bin/${self.packages.${system}.server.name}";
+        };
+
         devShells.default = pkgs.mkShell {
           inherit buildInputs;
 
@@ -109,10 +121,12 @@
             rustfmt
             clang
             mold
+            cargo-watch
 
             (writeShellScriptBin "serve" ''
-              kill $(${lsof}/bin/lsof -t -i:6000)
-              ${tmux}/bin/tmux new-session -d 'cargo run -p client' \; \
+              pkill ${projectName}
+              ${tmux}/bin/tmux kill-session
+              ${tmux}/bin/tmux new -s Serve -d 'cargo run -p client; ${tmux}/bin/tmux kill-session' \; \
                 select-pane -T 'Client' \; \
                 split-window -h 'cargo run -p server' \; \
                 select-pane -T 'Server' \; \
