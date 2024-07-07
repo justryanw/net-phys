@@ -109,6 +109,15 @@
             rustfmt
             clang
             mold
+
+            (writeShellScriptBin "serve" ''
+              kill $(${lsof}/bin/lsof -t -i:6000)
+              ${tmux}/bin/tmux new-session -d 'cargo run -p client' \; \
+                select-pane -T 'Client' \; \
+                split-window -h 'cargo run -p server' \; \
+                select-pane -T 'Server' \; \
+                attach
+            '')
           ];
 
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
