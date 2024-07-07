@@ -47,9 +47,13 @@
 
         porjectName = "net-phys";
 
-        cargoNix = workspaceMember: pkgs.callPackage
+        workspaceMemberOverride = workspaceMember: attrs: {
+          name = "${porjectName}-${workspaceMember}-${attrs.version}";
+        };
+
+        cargoNix = pkgs.callPackage
           (crate2nix.tools.${system}.generatedCargoNix {
-            name = workspaceMember;
+            name = porjectName;
             src = ./.;
           })
           {
@@ -59,23 +63,23 @@
                 buildInputs = with pkgs; [ wayland ];
               };
 
-              ${workspaceMember} = attrs: {
-                name = "${porjectName}-${workspaceMember}-${attrs.version}";
-
+              client = attrs: ((workspaceMemberOverride "client" attrs) // {
                 nativeBuildInputs = [ pkgs.makeWrapper ];
 
                 postInstall = ''
-                  wrapProgram $out/bin/${workspaceMember} \
+                  wrapProgram $out/bin/client \
                     --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath buildInputs} \
                     --prefix XCURSOR_THEME : "Adwaita"
                   mkdir -p $out/bin/assets
                   cp -a assets $out/bin
                 '';
-              };
+              });
+
+              server = (workspaceMemberOverride "server");
             };
           };
 
-        build-workspace-member = workspaceMemeber: (cargoNix workspaceMemeber).workspaceMembers.${workspaceMemeber}.build;
+        build-workspace-member = workspaceMemeber: cargoNix.workspaceMembers.${workspaceMemeber}.build;
 
         pkgs-for-rust = inputs.nixpkgs-for-rust.legacyPackages.${system};
 
