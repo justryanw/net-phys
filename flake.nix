@@ -22,7 +22,7 @@
     };
   };
 
-  outputs = inputs @ { self, flake-parts, crate2nix, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs @ { flake-parts, crate2nix, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -45,13 +45,11 @@
           libX11
         ]));
 
-        projectName = "net-phys";
-
-        workspaceMemberName = workspaceMember: attrs: "${projectName}-${workspaceMember}-${attrs.version}";
+        name = "net-phys";
 
         cargoNix = pkgs.callPackage
           (crate2nix.tools.${system}.generatedCargoNix {
-            name = projectName;
+            inherit name;
             src = ./.;
           })
           {
@@ -61,13 +59,10 @@
                 buildInputs = with pkgs; [ wayland ];
               };
 
-              client = attrs: rec {
-                name = workspaceMemberName "client" attrs;
-
+              ${name} = attrs: {
                 nativeBuildInputs = [ pkgs.makeWrapper ];
 
                 postInstall = ''
-                  mv $out/bin/${projectName}-client $out/bin/${name}
                   wrapProgram $out/bin/${name} \
                     --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath buildInputs} \
                     --prefix XCURSOR_THEME : "Adwaita"
@@ -75,18 +70,8 @@
                   cp -a assets $out/bin
                 '';
               };
-
-              server = attrs: rec {
-                name = workspaceMemberName "server" attrs;
-
-                postInstall = ''
-                  mv $out/bin/${projectName}-server $out/bin/${name}
-                '';
-              };
             };
           };
-
-        buildWorkspaceMember = workspaceMemeber: cargoNix.workspaceMembers.${workspaceMemeber}.build;
 
         pkgsForRust = inputs.nixpkgs-for-rust.legacyPackages.${system};
 
@@ -96,29 +81,12 @@
             cargo = pkgsForRust.cargo;
           })
         ];
-
-        serveScript = pkgs.writeShellScriptBin "serve" ''
-          pkill ${projectName}
-          ${pkgs.tmux}/bin/tmux kill-session
-          ${pkgs.tmux}/bin/tmux new -s Serve -d 'cargo run -p client; ${pkgs.tmux}/bin/tmux kill-session' \; \
-            select-pane -T 'Client' \; \
-            split-window -h 'cargo run -p server' \; \
-            select-pane -T 'Server' \; \
-            attach
-        '';
       in
       {
         _module.args.pkgs = import inputs.nixpkgs { inherit system overlays; config = { }; };
 
         packages = {
-          client = buildWorkspaceMember "client";
-          server = buildWorkspaceMember "server";
-        };
-
-        apps = {
-          client.program = "${self.packages.${system}.client}/bin/${self.packages.${system}.client.name}";
-          server.program = "${self.packages.${system}.server}/bin/${self.packages.${system}.server.name}";
-          default = self.apps.${system}.client;
+          default = cargoNix.rootCrate.build;
         };
 
         devShells.default = pkgs.mkShell {
@@ -132,9 +100,7 @@
             clang
             mold
             cargo-watch
-          ]) ++ [
-            serveScript
-          ];
+          ]);
 
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
           LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath buildInputs}";
