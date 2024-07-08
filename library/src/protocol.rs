@@ -54,6 +54,8 @@ impl Into<ChannelId> for ServerChannel {
 impl ServerChannel {
     pub fn channels_configuration() -> ChannelsConfiguration {
         ChannelsConfiguration::from_types(vec![
+            ChannelType::UnorderedReliable,
+            ChannelType::UnorderedReliable,
             ChannelType::Unreliable,
         ])
         .unwrap()

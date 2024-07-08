@@ -3,7 +3,7 @@ use std::{
     net::{IpAddr, Ipv4Addr},
 };
 
-use bevy::{app::ScheduleRunnerPlugin, log::LogPlugin, prelude::*};
+use bevy::{log::LogPlugin, prelude::*};
 use bevy_quinnet::{
     server::{
         certificate::CertificateRetrievalMode, ConnectionEvent, ConnectionLostEvent, Endpoint,
@@ -32,13 +32,15 @@ struct Cube {
 fn main() {
     App::new()
         .add_plugins((
-            ScheduleRunnerPlugin::default(),
+            MinimalPlugins,
             LogPlugin::default(),
             QuinnetServerPlugin::default(),
         ))
         .insert_resource(Players::default())
+        .insert_resource(Time::<Fixed>::from_hz(60.0))
         .add_systems(Startup, start_listening)
-        .add_systems(Update, (handle_server_events, handle_client_messages, update))
+        .add_systems(Update, (handle_server_events, handle_client_messages))
+        .add_systems(FixedUpdate, update)
         .run();
 }
 
@@ -107,6 +109,7 @@ fn update(
     mut cubes: Query<(&mut Transform, &Cube, Entity)>,
     players: ResMut<Players>,
     server: Res<QuinnetServer>,
+    time: Res<Time<Fixed>>,
 ) {
     for (mut transform, cube, entity) in cubes.iter_mut() {
         let Some(player) = players.map.get(&cube.player_id) else {
@@ -115,10 +118,10 @@ fn update(
 
         let Vec2 { x, y } = player.input.normalize_or_zero();
 
-        // if player.input != Vec2::ZERO {
-            transform.translation.x += x * 0.1;
-            transform.translation.y += y * 0.1;
-        // }
+        if player.input != Vec2::ZERO {
+            transform.translation.x += x * 500.0 * time.delta_seconds();
+            transform.translation.y += y * 500.0 * time.delta_seconds();
+        }
 
         server.endpoint().try_send_group_message_on(
             players.map.keys().into_iter(),

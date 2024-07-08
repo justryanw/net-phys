@@ -21,7 +21,7 @@ fn main() {
         .add_plugins(QuinnetClientPlugin::default())
         .insert_resource(ClearColor(Srgba::gray(0.25).into()))
         .add_systems(Startup, (setup, start_connection))
-        .add_systems(Update, (update, handle_server_messages))
+        .add_systems(Update, (handle_server_messages, update))
         .run();
 }
 
