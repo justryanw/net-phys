@@ -60,6 +60,8 @@
               };
 
               ${name} = attrs: {
+                name = "${name}-${attrs.version}";
+
                 nativeBuildInputs = [ pkgs.makeWrapper ];
 
                 postInstall = ''
