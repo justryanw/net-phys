@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.14", features = ["wayland"] }
 lightyear = "0.16"
+serde = "1.0"
