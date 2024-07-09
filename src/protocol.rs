@@ -12,6 +12,8 @@ use lightyear::{
 };
 use leafwing_input_manager::prelude::*;
 
+use crate::shared::color_from_id;
+
 pub const BALL_SIZE: f32 = 15.0;
 pub const PLAYER_SIZE: f32 = 40.0;
 pub const REPLICATION_GROUP: ReplicationGroup = ReplicationGroup::new_id(1);
