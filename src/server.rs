@@ -63,11 +63,16 @@ fn init(mut commands: Commands, global: Res<Global>) {
 
 pub(crate) fn movement(
     mut action_query: Query<
-        (&mut LinearVelocity, &ActionState<PlayerActions>),
+        (
+            Entity,
+            &Position,
+            &mut LinearVelocity,
+            &ActionState<PlayerActions>,
+        ),
         (Without<Confirmed>, Without<Predicted>),
     >,
 ) {
-    for (velocity, action) in action_query.iter_mut() {
+    for (_, _, velocity, action) in action_query.iter_mut() {
         if !action.get_pressed().is_empty() {
             shared_movement_behaviour(velocity, action);
         }
