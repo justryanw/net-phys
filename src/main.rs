@@ -4,9 +4,11 @@
 use crate::client::ExampleClientPlugin;
 use crate::server::ExampleServerPlugin;
 use crate::shared::SharedPlugin;
+use app::{Apps, Cli};
 use bevy::prelude::*;
 use lightyear::prelude::client::PredictionConfig;
 use serde::{Deserialize, Serialize};
+use settings::{read_settings, Settings};
 
 mod client;
 mod protocol;

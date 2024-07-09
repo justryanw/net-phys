@@ -34,15 +34,6 @@ pub enum Cli {
     },
 }
 
-struct SendApp(App);
-
-unsafe impl Send for SendApp {}
-impl SendApp {
-    fn run(&mut self) {
-        self.0.run();
-    }
-}
-
 impl Default for Cli {
     fn default() -> Self {
         cli()
@@ -253,7 +244,6 @@ fn server_app(
     };
     (app, server_config)
 }
-
 
 fn combined_app(
     settings: Settings,

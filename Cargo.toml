@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.14", features = ["wayland", "bevy_state", "serialize"] }
-lightyear = { version = "0.16", features = ["leafwing", "avian2d"] }
+lightyear = { version = "0.16", features = ["leafwing", "avian2d", "steam"] }
 avian2d = { version = "0.1", features = ["serialize"] }
 leafwing-input-manager = "0.14"
 serde = { version = "1.0", features = ["derive"] }
