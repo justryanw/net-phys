@@ -1,8 +1,12 @@
-[workspace]
-members = ["client", "server", "library"]
-resolver = "2"
+[package]
+name = "net-phys"
+version = "0.1.0"
+edition = "2021"
 
-[workspace.dependencies]
-bevy = { version = "0.14", features = [ "wayland" ] }
-bevy_quinnet = "0.9"
-serde = "1.0"
+[dependencies]
+bevy = { version = "0.14", features = ["wayland", "bevy_state", "serialize"] }
+lightyear = { version = "0.16", features = ["leafwing", "avian2d", "steam"] }
+avian2d = { version = "0.1", features = ["serialize"] }
+leafwing-input-manager = "0.14"
+serde = { version = "1.0", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
