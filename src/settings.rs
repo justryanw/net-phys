@@ -1,4 +1,4 @@
-use std::net::{Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use bevy::asset::ron;
 use bevy::prelude::{default, Resource};
@@ -182,9 +182,9 @@ pub(crate) fn build_client_netcode_config(
     }
 }
 
-pub fn get_client_net_config(settings: &Settings, client_id: u64) -> client::NetConfig {
+pub fn get_client_net_config(settings: &Settings, client_id: u64, server_ip: IpAddr) -> client::NetConfig {
     let server_addr = SocketAddr::new(
-        settings.client.server_addr.into(),
+        server_ip,
         settings.client.server_port,
     );
     let client_addr = SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), settings.client.client_port);

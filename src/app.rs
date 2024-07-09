@@ -83,13 +83,10 @@ impl Apps {
                 Apps::Server { app, config }
             }
             Cli::Client { client_id, server_ip } => {
-                let server_addr = SocketAddr::new(
-                    server_ip.unwrap_or(settings.client.server_addr).into(),
-                    settings.client.server_port,
-                );
                 let client_id = client_id.unwrap_or(settings.client.client_id);
+                let server_ip = server_ip.unwrap_or(settings.client.server_addr).into();
 
-                let net_config = get_client_net_config(&settings, client_id);
+                let net_config = get_client_net_config(&settings, client_id, server_ip);
                 let (app, config) = client_app(settings, net_config);
                 Apps::Client { app, config }
             }
