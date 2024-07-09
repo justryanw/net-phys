@@ -46,7 +46,7 @@ impl Plugin for SharedPlugin {
         app.add_systems(Startup, init);
 
         app.add_plugins(PhysicsPlugins::new(FixedUpdate))
-            .insert_resource(Time::new_with(Physics::fixed_once_hz(64.0)))
+            .insert_resource(Time::new_with(Physics::fixed_once_hz(FIXED_TIMESTEP_HZ)))
             .insert_resource(Gravity(Vec2::ZERO));
         app.configure_sets(
             FixedUpdate,
@@ -178,5 +178,18 @@ impl WallBundle {
             },
             wall: Wall { start, end },
         }
+    }
+}
+
+pub const FIXED_TIMESTEP_HZ: f64 = 64.0;
+pub const SERVER_REPLICATION_INTERVAL: Duration = Duration::from_millis(100);
+
+pub fn shared_config(mode: Mode) -> SharedConfig {
+    SharedConfig {
+        server_replication_send_interval: SERVER_REPLICATION_INTERVAL,
+        tick: TickConfig {
+            tick_duration: Duration::from_secs_f64(1.0 / FIXED_TIMESTEP_HZ),
+        },
+        mode,
     }
 }
