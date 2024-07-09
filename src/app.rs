@@ -1,6 +1,7 @@
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::time::Duration;
+use std::net::Ipv4Addr;
 
 use bevy::asset::ron;
 use bevy::log::{Level, LogPlugin};
@@ -31,6 +32,8 @@ pub enum Cli {
     Client {
         #[arg(short, long, default_value = None)]
         client_id: Option<u64>,
+        #[arg(short, long, default_value = None)]
+        server_ip: Option<Ipv4Addr>
     },
 }
 
@@ -79,12 +82,13 @@ impl Apps {
                 let (app, config) = server_app(settings, vec![]);
                 Apps::Server { app, config }
             }
-            Cli::Client { client_id } => {
+            Cli::Client { client_id, server_ip } => {
                 let server_addr = SocketAddr::new(
-                    settings.client.server_addr.into(),
+                    server_ip.unwrap_or(settings.client.server_addr).into(),
                     settings.client.server_port,
                 );
                 let client_id = client_id.unwrap_or(settings.client.client_id);
+
                 let net_config = get_client_net_config(&settings, client_id);
                 let (app, config) = client_app(settings, net_config);
                 Apps::Client { app, config }

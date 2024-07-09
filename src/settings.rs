@@ -59,14 +59,12 @@ impl Conditioner {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ServerSettings {
     pub(crate) headless: bool,
-    pub(crate) inspector: bool,
     pub(crate) conditioner: Option<Conditioner>,
     pub transport: Vec<ServerTransports>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ClientSettings {
-    pub(crate) inspector: bool,
     pub(crate) client_id: u64,
     pub(crate) client_port: u16,
     pub server_addr: Ipv4Addr,
