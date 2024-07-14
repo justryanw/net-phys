@@ -104,18 +104,9 @@ pub(crate) fn shared_movement_behaviour(
     action: &ActionState<PlayerActions>,
 ) {
     const MOVE_SPEED: f32 = 10.0;
-    if action.pressed(&PlayerActions::Up) {
-        velocity.y += MOVE_SPEED;
-    }
-    if action.pressed(&PlayerActions::Down) {
-        velocity.y -= MOVE_SPEED;
-    }
-    if action.pressed(&PlayerActions::Left) {
-        velocity.x -= MOVE_SPEED;
-    }
-    if action.pressed(&PlayerActions::Right) {
-        velocity.x += MOVE_SPEED;
-    }
+
+    let axis_pair = action.axis_pair(&PlayerActions::Move).expect("Could not get Move action");
+    velocity.0 += axis_pair.xy() * MOVE_SPEED;
 
     *velocity = LinearVelocity(velocity.clamp_length_max(MAX_VELOCITY));
 }
@@ -192,7 +183,7 @@ impl WallBundle {
 }
 
 pub const FIXED_TIMESTEP_HZ: f64 = 64.0;
-pub const SERVER_REPLICATION_INTERVAL: Duration = Duration::from_millis(100);
+pub const SERVER_REPLICATION_INTERVAL: Duration = Duration::ZERO;
 
 pub fn shared_config(mode: Mode) -> SharedConfig {
     SharedConfig {

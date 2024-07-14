@@ -118,12 +118,9 @@ pub struct ColorComponent(pub(crate) Color);
 #[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BallMarker;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy, Hash, Reflect, Actionlike)]
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Clone, Copy, Hash, Reflect, Actionlike)]
 pub enum PlayerActions {
-    Up,
-    Down,
-    Left,
-    Right
+    Move
 }
 
 pub struct ProtocolPlugin;

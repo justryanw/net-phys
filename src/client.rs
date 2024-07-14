@@ -54,10 +54,12 @@ pub(crate) fn handle_connection(
             client_id,
             Vec2::new(-50.0, y),
             InputMap::new([
-                (PlayerActions::Up, KeyCode::KeyW),
-                (PlayerActions::Down, KeyCode::KeyS),
-                (PlayerActions::Left, KeyCode::KeyA),
-                (PlayerActions::Right, KeyCode::KeyD),
+                (PlayerActions::Move, VirtualDPad {
+                    up: KeyCode::KeyW.into(),
+                    down: KeyCode::KeyS.into(),
+                    left: KeyCode::KeyA.into(),
+                    right: KeyCode::KeyD.into()
+                }),
             ]),
         ));
     }
