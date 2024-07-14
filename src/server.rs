@@ -54,11 +54,16 @@ fn init(mut commands: Commands, global: Res<Global>) {
         }),
     );
 
-    commands.spawn(BallBundle::new(
-        Vec2::new(0.0, 0.0),
-        css::AZURE.into(),
-        global.predict_all,
-    ));
+    let spacing = 40;
+    for y in -5..5 {
+        for x in -8..8 {
+            commands.spawn(BallBundle::new(
+                Vec2::new((x * spacing + spacing / 2) as f32, (y * spacing + spacing * 4) as f32),
+                css::AZURE.into(),
+                global.predict_all,
+            ));
+        }
+    }
 }
 
 pub(crate) fn movement(
