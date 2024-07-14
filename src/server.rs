@@ -9,7 +9,7 @@ use lightyear::prelude::*;
 use crate::protocol::*;
 use crate::shared::{shared_movement_behaviour, FixedSet};
 
-pub struct ExampleServerPlugin {
+pub struct ServerPlugin {
     pub(crate) predict_all: bool,
 }
 
@@ -18,7 +18,7 @@ pub struct Global {
     predict_all: bool,
 }
 
-impl Plugin for ExampleServerPlugin {
+impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Global {
             predict_all: self.predict_all,

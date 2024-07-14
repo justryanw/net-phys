@@ -1,8 +1,8 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
-use crate::client::ExampleClientPlugin;
-use crate::server::ExampleServerPlugin;
+use crate::client::ClientPlugin;
+use crate::server::ServerPlugin;
 use crate::shared::SharedPlugin;
 use app::{Apps, Cli};
 use bevy::prelude::*;
@@ -28,8 +28,8 @@ fn main() {
     })
     .add_lightyear_plugins()
     .add_user_plugins(
-        ExampleClientPlugin,
-        ExampleServerPlugin {
+        ClientPlugin,
+        ServerPlugin {
             predict_all: settings.predict_all,
         },
         SharedPlugin {

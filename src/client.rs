@@ -7,9 +7,9 @@ use lightyear::prelude::*;
 use crate::protocol::*;
 use crate::shared::{shared_movement_behaviour, FixedSet};
 
-pub struct ExampleClientPlugin;
+pub struct ClientPlugin;
 
-impl Plugin for ExampleClientPlugin {
+impl Plugin for ClientPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, init);
         app.add_systems(
@@ -104,8 +104,18 @@ fn player_movement(
         ),
         With<Predicted>,
     >,
+    time: Res<Time>,
 ) {
-    for (entity, _, position, velocity, action_state) in velocity_query.iter_mut() {
+    for (entity, player_id, position, mut velocity, action_state) in velocity_query.iter_mut() {
+
+        if let ClientId::Local(_) = player_id.0  {
+            if (time.elapsed_seconds() * 1.5) as i32 & 1 == 0 {
+                velocity.x += 10.0;
+            } else {
+                velocity.x -= 10.0;
+            }
+        }
+
         if !action_state.get_pressed().is_empty() {
             trace!(?entity, tick = ?tick_manager.tick(), ?position, actions = ?action_state.get_pressed(), "applying movement to predicted player");
 

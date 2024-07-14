@@ -37,7 +37,7 @@ impl Plugin for SharedPlugin {
 
             app.add_systems(
                 PostUpdate,
-                draw_elements
+                (draw_elements, draw_confirmed_shadows)
                     .after(InterpolationSet::Interpolate)
                     .after(PredictionSet::VisualCorrection),
             );
@@ -60,9 +60,6 @@ impl Plugin for SharedPlugin {
                 (FixedSet::Main, FixedSet::Physics).chain(),
             ),
         );
-
-        app.add_systems(FixedPostUpdate, after_physics_log);
-        app.add_systems(Last, last_log);
 
         app.register_type::<PlayerId>();
     }
@@ -119,17 +116,8 @@ pub(crate) fn shared_movement_behaviour(
     if action.pressed(&PlayerActions::Right) {
         velocity.x += MOVE_SPEED;
     }
+
     *velocity = LinearVelocity(velocity.clamp_length_max(MAX_VELOCITY));
-}
-
-pub(crate) fn after_physics_log(tick_manager: Res<TickManager>, rollback: Option<Res<Rollback>>) {
-    let tick = rollback.map_or(tick_manager.tick(), |r| {
-        tick_manager.tick_or_rollback_tick(r.as_ref())
-    });
-}
-
-pub(crate) fn last_log(tick_manager: Res<TickManager>) {
-    let tick = tick_manager.tick();
 }
 
 pub(crate) fn draw_elements(
@@ -151,6 +139,28 @@ pub(crate) fn draw_elements(
     }
     for (wall, color) in &walls {
         gizmos.line_2d(wall.start, wall.end, color.0);
+    }
+}
+
+pub(crate) fn draw_confirmed_shadows(
+    mut gizmos: Gizmos,
+    confirmed_q: Query<(&Position, &Rotation, &LinearVelocity, &Confirmed), With<PlayerId>>,
+    predicted_q: Query<&Position, With<PlayerId>>,
+) {
+    for (position, rotation, velocity, confirmed) in confirmed_q.iter() {
+        let speed = velocity.length() / MAX_VELOCITY;
+        let ghost_col = css::GRAY.with_alpha(speed);
+        gizmos.rect_2d(
+            Vec2::new(position.x, position.y),
+            rotation.as_radians(),
+            Vec2::ONE * PLAYER_SIZE,
+            ghost_col,
+        );
+        if let Some(e) = confirmed.predicted {
+            if let Ok(pos) = predicted_q.get(e) {
+                gizmos.line_2d(**position, **pos, ghost_col);
+            }
+        }
     }
 }
 
