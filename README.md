@@ -1,9 +1,9 @@
-### Simulate network delay
+# Running
 ```bash
-# Start
-sudo tc qdisc add dev lo root netem delay 100ms
-# Change 
-sudo tc qdisc change dev lo root netem delay 50ms
-# Reset
-sudo tc qdisc del dev lo root
+nix run github:justryanw/net-phys -- host-server # Client and server
+#                                    client
+#                                    server
+
+# Run host-server and client to connect to it (-c is client ID)
+nix run github:justryanw/net-phys -- host-server & nix run github:justryanw/net-phys -- client -c 1
 ```
