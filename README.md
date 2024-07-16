@@ -16,5 +16,5 @@ nix run github:justryanw/net-phys -- client -c 1 -s 127.0.0.1
 
 Stress test (locally)
 ```bash
-cargo run --release -- server & parallel cargo run --release -- client -c ::: {0..15}
+mangohud cargo run --release -- server & parallel mangohud cargo run --release -- client -c ::: {0..15}
 ```

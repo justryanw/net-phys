@@ -92,9 +92,7 @@
         };
 
         devShells.default = pkgs.mkShell {
-          inherit buildInputs;
-
-          nativeBuildInputs = (with pkgs; [
+          buildInputs = buildInputs ++ (with pkgs; [
             cargo
             rustc
             pkg-config
