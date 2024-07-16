@@ -1,4 +1,6 @@
 use avian2d::prelude::*;
+use bevy::ecs::system::SystemState;
+use bevy::ecs::world;
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 use lightyear::prelude::client::*;
@@ -11,23 +13,37 @@ pub struct ClientPlugin;
 
 impl Plugin for ClientPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, init);
-        app.add_systems(
-            PreUpdate,
-            handle_connection
-                .after(MainSet::Receive)
-                .before(PredictionSet::SpawnPrediction),
-        );
-        app.add_systems(FixedUpdate, player_movement.in_set(FixedSet::Main));
-        app.add_systems(
-            Update,
-            (
-                add_ball_physics,
-                add_player_physics,
-                handle_predicted_spawn,
-                handle_interpolated_spawn,
-            ),
-        );
+        app.insert_resource(MockInputSettings::default())
+            .add_systems(Startup, init)
+            .add_systems(
+                PreUpdate,
+                handle_connection
+                    .after(MainSet::Receive)
+                    .before(PredictionSet::SpawnPrediction),
+            )
+            .add_systems(FixedUpdate, player_movement.in_set(FixedSet::Main))
+            .add_systems(
+                Update,
+                (
+                    add_ball_physics,
+                    add_player_physics,
+                    handle_predicted_spawn,
+                    handle_interpolated_spawn,
+                    mock_input.run_if(|mis: Res<MockInputSettings>| mis.enabled),
+                    mock_input_toggle,
+                ),
+            );
+    }
+}
+
+#[derive(Resource)]
+pub struct MockInputSettings {
+    enabled: bool,
+}
+
+impl Default for MockInputSettings {
+    fn default() -> Self {
+        Self { enabled: true }
     }
 }
 
@@ -53,14 +69,15 @@ pub(crate) fn handle_connection(
         commands.spawn(PlayerBundle::new(
             client_id,
             Vec2::new(-50.0, y),
-            InputMap::new([
-                (PlayerActions::Move, VirtualDPad {
+            InputMap::new([(
+                PlayerActions::Move,
+                VirtualDPad {
                     up: KeyCode::KeyW.into(),
                     down: KeyCode::KeyS.into(),
                     left: KeyCode::KeyA.into(),
-                    right: KeyCode::KeyD.into()
-                }),
-            ]),
+                    right: KeyCode::KeyD.into(),
+                },
+            )]),
         ));
     }
 }
@@ -106,24 +123,41 @@ fn player_movement(
         ),
         With<Predicted>,
     >,
-    time: Res<Time>,
 ) {
-    for (entity, player_id, position, mut velocity, action_state) in velocity_query.iter_mut() {
-
-        if let ClientId::Local(_) = player_id.0  {
-            if (time.elapsed_seconds() * 1.5) as i32 & 1 == 0 {
-                velocity.x += 10.0;
-            } else {
-                velocity.x -= 10.0;
-            }
-        }
-
+    for (entity, player_id, position, velocity, action_state) in velocity_query.iter_mut() {
         if !action_state.get_pressed().is_empty() {
             trace!(?entity, tick = ?tick_manager.tick(), ?position, actions = ?action_state.get_pressed(), "applying movement to predicted player");
 
             shared_movement_behaviour(velocity, action_state);
         }
     }
+}
+
+fn mock_input_toggle() {}
+
+fn mock_input(
+    world: &mut World,
+    params: &mut SystemState<(
+        Res<Time>,
+        Res<ButtonInput<KeyCode>>,
+        ResMut<MockInputSettings>,
+    )>,
+) {
+    world.release_input(KeyCode::KeyA);
+    world.release_input(KeyCode::KeyD);
+
+    let (time, keys, mut mis) = params.get_mut(world);
+
+    if keys.just_pressed(KeyCode::KeyT) {
+        mis.enabled = !mis.enabled;
+    }
+
+    if (time.elapsed_seconds() * 1.5) as i32 & 1 == 0 {
+        world.send_input(KeyCode::KeyA)
+    } else {
+        world.send_input(KeyCode::KeyD)
+    }
+
 }
 
 pub(crate) fn handle_predicted_spawn(mut predicted: Query<&mut ColorComponent, Added<Predicted>>) {
