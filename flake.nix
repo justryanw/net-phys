@@ -86,6 +86,7 @@
             clang
             mold
             cargo-watch
+            nix-output-monitor
           ]);
 
           RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
