@@ -107,11 +107,11 @@
         "pre-commit-hooks": "pre-commit-hooks_3"
       },
       "locked": {
-        "lastModified": 1719760654,
-        "narHash": "sha256-L3VIJ9182wsYJqP27xO5qiWwfK+a00x0JHiy8ns3NQE=",
+        "lastModified": 1723311214,
+        "narHash": "sha256-xdGZQBEa1AC2us/sY3igS/CucWY6jErXsAvCFRhB2LI=",
         "owner": "nix-community",
         "repo": "crate2nix",
-        "rev": "a6ca1e58132bab26fc08572f22a34bbb86f4d91d",
+        "rev": "236f6addfd452a48be805819e3216af79e988fd5",
         "type": "github"
       },
       "original": {
@@ -375,11 +375,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1719994518,
-        "narHash": "sha256-pQMhCCHyQGRzdfAkdJ4cIWiw+JNuWsTX7f0ZYSyz0VY=",
+        "lastModified": 1727826117,
+        "narHash": "sha256-K5ZLCyfO/Zj9mPFldf3iwS6oZStJcU4tSpiXTMYaaL0=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "9227223f6d922fee3c7b190b2cc238a99527bbb7",
+        "rev": "3d04084d54bedc3d6b8b736c70ef449225c361b1",
         "type": "github"
       },
       "original": {
@@ -611,22 +611,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-for-rust": {
-      "locked": {
-        "lastModified": 1720310911,
-        "narHash": "sha256-oAZxXQBjEHQu9lfzF+dpAJihp6M98qfs5iV6vqqfCSE=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "e5fadeaa2723122c0ed30f8b937f7a0f6dc134e6",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "staging",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1715534503,
@@ -687,11 +671,11 @@
     },
     "nixpkgs_6": {
       "locked": {
-        "lastModified": 1720181791,
-        "narHash": "sha256-i4vJL12/AdyuQuviMMd1Hk2tsGt02hDNhA0Zj1m16N8=",
+        "lastModified": 1728031656,
+        "narHash": "sha256-JXumn7X+suKEcehp4rchSvBzIboqyybQ5bLK4wk7gQU=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "4284c2b73c8bce4b46a6adf23e16d9e2ec8da4bb",
+        "rev": "eeeb90a1dd3c9bea3afdbc76fd34d0fb2a727c7a",
         "type": "github"
       },
       "original": {
@@ -805,8 +789,7 @@
       "inputs": {
         "crate2nix": "crate2nix",
         "flake-parts": "flake-parts_4",
-        "nixpkgs": "nixpkgs_6",
-        "nixpkgs-for-rust": "nixpkgs-for-rust"
+        "nixpkgs": "nixpkgs_6"
       }
     },
     "systems": {

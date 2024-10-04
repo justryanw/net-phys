@@ -8,9 +8,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    # TODO remove when 1.79 is merged into nixpkgs
-    nixpkgs-for-rust.url = "github:NixOS/nixpkgs/staging";
-
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
@@ -74,19 +71,8 @@
               };
             };
           };
-
-        pkgsForRust = inputs.nixpkgs-for-rust.legacyPackages.${system};
-
-        overlays = [
-          (final: prev: {
-            rustc = pkgsForRust.rustc;
-            cargo = pkgsForRust.cargo;
-          })
-        ];
       in
       {
-        _module.args.pkgs = import inputs.nixpkgs { inherit system overlays; config = { }; };
-
         packages = {
           default = cargoNix.rootCrate.build;
         };

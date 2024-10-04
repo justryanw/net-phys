@@ -157,7 +157,6 @@ fn mock_input(
     } else {
         world.send_input(KeyCode::KeyD)
     }
-
 }
 
 pub(crate) fn handle_predicted_spawn(mut predicted: Query<&mut ColorComponent, Added<Predicted>>) {
