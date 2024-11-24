@@ -28,7 +28,7 @@ jobs:
       - uses: nixbuild/nixbuild-action@v19
         with:
           nixbuild_token: ${{ secrets.NIXBUILD_TOKEN }}
-      - run: nix build \
+      - run: nix build . -- \
           --print-build-logs \
           --builders "" \
           --max-jobs 2 \
