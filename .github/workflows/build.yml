@@ -29,7 +29,7 @@ jobs:
         with:
           nixbuild_token: ${{ secrets.NIXBUILD_TOKEN }}
       - run: |
-          nix build . -- \
+          nix build \
             --print-build-logs \
             --builders "" \
             --max-jobs 2 \
