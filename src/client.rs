@@ -43,7 +43,7 @@ pub struct MockInputSettings {
 
 impl Default for MockInputSettings {
     fn default() -> Self {
-        Self { enabled: true }
+        Self { enabled: false }
     }
 }
 
